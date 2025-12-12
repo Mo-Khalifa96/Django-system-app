@@ -1,0 +1,130 @@
+#docker compose file (for development)
+
+services:
+  web:
+    build: .
+    container_name: systemapp-dev-web
+    command: ./wait-for-it.sh postgres:5432 -- ./docker-entrypoint.dev.sh
+    restart: always
+    env_file:
+      - .env
+    environment:
+      SERVICE: web
+      DJANGO_SETTINGS_MODULE: SystemApp.settings.dev
+      IS_DOCKERIZED: True
+    ports:
+      - "8000:8000" 
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - static-data:/app/static
+      - media-data:/app/media
+      - gunicorn-socket:/run/gunicorn  
+    networks:
+      - systemapp-dev-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check", "--database", "default"]
+      retries: 5
+      timeout: 10s
+      interval: 20s
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "1"
+
+  qcluster:
+    build: .
+    container_name: systemapp-dev-qcluster
+    command: ./wait-for-it.sh postgres:5432 -- ./docker-entrypoint.dev.sh
+    profiles: ["dev"]
+    restart: always
+    env_file:
+      - .env
+    environment:
+      SERVICE: qcluster
+      DJANGO_SETTINGS_MODULE: SystemApp.settings.dev
+      IS_DOCKERIZED: True
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${DB_PORT}
+    depends_on:
+      web:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    networks:
+      - systemapp-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "python manage.py shell -c \"from django_q.models import Task; print('OK')\" || exit 1"]
+      retries: 3
+      timeout: 10s
+      interval: 30s
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "1"
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: systemapp-dev-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5433:5432"  
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - systemapp-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      retries: 5
+      timeout: 10s
+      interval: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "1"
+
+  tests:
+    build: .
+    container_name: systemapp-tests
+    command: ./wait-for-it.sh postgres:5432 -- ptw --poll -- -v -x
+    tty: true
+    profiles: ["dev"]
+    environment:
+      - DJANGO_SETTINGS_MODULE=SystemApp.settings.dev 
+      - IS_DOCKERIZED=True
+      - PYTHONWARNINGS=ignore::SyntaxWarning
+    volumes:
+      - .:/app
+    networks:
+      - systemapp-dev-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pg-data:
+  gunicorn-socket:
+  static-data:
+  media-data:
+
+networks:
+  systemapp-dev-network:
+    driver: bridge
