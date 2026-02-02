@@ -18,7 +18,17 @@ SITE_DOMAIN = os.getenv('SITE_DOMAIN')
 
 #Database for production
 DATABASES = {
-    'default': dj_database_url.config()  #configure database from the DATABASE_URL env variable
+    'default': {
+        **dj_database_url.config(),
+        
+        #Database health checks
+        'CONN_MAX_AGE': 60,  
+        'CONN_HEALTH_CHECKS': True, 
+        'OPTIONS': {
+            'connect_timeout': 10,
+            'options': '-c statement_timeout=45000',  #45 seconds
+        },
+      }  #configure database from the DATABASE_URL env variable
 }
 
 

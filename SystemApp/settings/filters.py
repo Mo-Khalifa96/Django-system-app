@@ -110,6 +110,8 @@ class DjangoQFilter(logging.Filter):
 
 
     def filter(self, record):
+        print(f"[DEBUG] DjangoQFilter called for: {record.getMessage()[:50]}")
+
         db_error_patterns = [
             'name or service not known',
             'failed to pull task from broker',
@@ -129,10 +131,10 @@ class DjangoQFilter(logging.Filter):
                     self.logger.critical(
                         'MEMORY PRESSURE DETECTED: Unable to connect to database for scheduled tasks likely due to OOM conditions.\n'
                         f'Current memory usage: {memory_percentage:.2f}% ({self._format_bytes(usage)}/{self._format_bytes(limit)})\n'
-                        'Retrying...'
+                        'Retrying...\n\n'
                     )
                 else:
-                    self.logger.warning('Unable to connect to database for scheduled tasks due to connection issues. Retrying...')
+                    self.logger.warning('Unable to connect to database for scheduled tasks due to connection issues. Retrying...\n\n')
                 
                 return False   
 

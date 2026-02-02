@@ -51,6 +51,7 @@ DATABASES = {
         'CONN_HEALTH_CHECKS': True, 
         'OPTIONS': {
             'connect_timeout': 10,
+            'options': '-c statement_timeout=45000',  #45 seconds
         },
     }
 }

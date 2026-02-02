@@ -33,6 +33,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 127.0.0.11
 
   qcluster:
     build: .
@@ -69,11 +73,17 @@ services:
       options:
         max-size: "5m"
         max-file: "1"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 127.0.0.11
 
   postgres:
     image: postgres:17-alpine
     container_name: systemapp-postgres
     restart: always
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -93,6 +103,10 @@ services:
       options:
         max-size: "10m"
         max-file: "1"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 127.0.0.11
 
   postgres-backup:
     build: .
@@ -124,6 +138,10 @@ services:
       options:
         max-size: "5m"
         max-file: "1"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 127.0.0.11
 
   nginx:
     build:

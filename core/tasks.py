@@ -14,12 +14,12 @@ def update_overdue_installments():
     try:
         with transaction.atomic():
             #Today's date (timezone-aware)
-            today = timezone.now().date()
-            logger.info(f"Processing overdue installments for date: {today.strftime('%d/%m/%y %I:%M %p')}")
+            today = timezone.now()
+            logger.info(f"Processing overdue installments for date: {today.strftime('%d/%m/%Y %I:%M %p')}")
             
             #Find installments that are overdue (and marked as pending)
             overdue_installments = Installment.objects.filter(
-                dueDate__lt=today,
+                dueDate__lt=today.date(),
                 status=Installment.PaymentStatusChoices.PENDING
                 )
             
