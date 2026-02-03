@@ -110,8 +110,6 @@ class DjangoQFilter(logging.Filter):
 
 
     def filter(self, record):
-        print(f"[DEBUG] DjangoQFilter called for: {record.getMessage()[:50]}")
-
         db_error_patterns = [
             'name or service not known',
             'failed to pull task from broker',
@@ -135,6 +133,7 @@ class DjangoQFilter(logging.Filter):
                     )
                 else:
                     self.logger.warning('Unable to connect to database for scheduled tasks due to connection issues. Retrying...\n\n')
+                    self.logger.warning('MESSAGE FOR DEBUGGING:\n', message, '\n-------------\n')
                 
                 return False   
 
