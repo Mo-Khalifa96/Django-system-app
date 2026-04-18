@@ -176,7 +176,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         data_preprocessed = {}
         for field in data:
             #Non-admins should not be able to pass permissions or role
-            if getattr(self.context.get('request').user, "role", None) != "ADMIN" and field in {"permissions", "role"}:
+            if getattr(self.context.get('request').user, "role", None) != "ADMIN" and field in ('role', 'permissions'):
                 continue 
 
             if field != 'permissions':
@@ -258,7 +258,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         return instance 
 
 
-@extend_schema_serializer(
+@extend_schema_serializer(   #TODO - no need for this separation; it's a Get request
     examples=[
         OpenApiExample(
             name='Admin Response',
