@@ -1,8 +1,4 @@
 #!/bin/bash
-# watch-sync.sh
-
-# Requires: inotify-tools
-# Install: sudo apt-get install inotify-tools
 
 WATCH_DIR="."
 EXCLUDE_DIRS="(.git|__pycache__|*.pyc|logs|backups|static|media)"
@@ -29,14 +25,13 @@ do
     for service in "${SERVICES[@]}"; do
         if docker ps --format '{{.Names}}' | grep -q "^${service}$"; then
             docker cp "$file" "$service:/app/${file#./}" 2>/dev/null && \
-                echo "  ✓ Synced to $service"
+                echo "Synced to $service"
         fi
     done
     
     #Optional: restart containers
     #docker restart systemapp-web systemapp-qcluster
 done
-
 
 
 #HOW TO USE:
