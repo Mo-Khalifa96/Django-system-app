@@ -8,7 +8,7 @@ WATCH_DIR="."
 EXCLUDE_DIRS="(.git|__pycache__|*.pyc|logs|backups|static|media)"
 SERVICES=("systemapp-web" "systemapp-qcluster")
 
-echo "👀 Watching for file changes in $WATCH_DIR..."
+echo "Watching for file changes in $WATCH_DIR..."
 echo "Press Ctrl+C to stop"
 
 inotifywait -m -r -e modify,create,delete \

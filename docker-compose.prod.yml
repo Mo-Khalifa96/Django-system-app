@@ -175,12 +175,25 @@ services:
   certbot:
     image: certbot/certbot
     container_name: systemapp-certbot
+    restart: always
     volumes:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - ./nginx/ssl:/var/www/certbot
+      - ./renew-certs.sh:/renew-certs.sh
     networks:
       - systemapp-network
+    entrypoint: /bin/sh -c
+    command: >
+      "chmod +x /renew-certs.sh;
+      trap exit TERM;
+      while :; do
+        /renew-certs.sh;
+        sleep 12h & wait $${!};
+      done"
+    depends_on:
+      nginx:
+        condition: service_healthy
     logging:
       driver: "json-file"
       options:
