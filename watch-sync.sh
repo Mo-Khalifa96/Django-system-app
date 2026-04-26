@@ -10,20 +10,22 @@ SERVICES=("systemapp-web" "systemapp-qcluster")
 
 echo "Watching for file changes in $WATCH_DIR..."
 echo "Press Ctrl+C to stop"
+echo ""
 
 inotifywait -m -r -e modify,create,delete \
     --exclude "$EXCLUDE_DIRS" \
     --format '%w%f' "$WATCH_DIR" | while read file
 do
-    # Ignore certain file types
+    #Ignore certain file types
     if [[ "$file" =~ \.(pyc|swp|tmp)$ ]]; then
         continue
     fi
     
-    echo ""
-    echo "Change detected: $file"
     
-    # Copy to containers
+    echo "Change detected: $file"
+    echo ""
+    
+    #Copy to containers
     for service in "${SERVICES[@]}"; do
         if docker ps --format '{{.Names}}' | grep -q "^${service}$"; then
             docker cp "$file" "$service:/app/${file#./}" 2>/dev/null && \
@@ -38,9 +40,8 @@ done
 
 
 #HOW TO USE:
-
- # Add permission first
+ #Add permission first
  # chmod +x ./watch-sync.sh
 
- # Start watching in background
+ #Start watching in background
  # ./watch-sync.sh &

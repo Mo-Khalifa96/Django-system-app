@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     postgresql-client \
     netcat-openbsd \
+    inotify-tools \
     dnsutils \
     awscli \
     gettext \
