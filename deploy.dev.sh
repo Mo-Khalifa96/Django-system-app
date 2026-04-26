@@ -25,4 +25,4 @@ docker compose --profile dev up -d postgres web qcluster tests
     # ./deploy.dev.sh --rebuild
 
 #or (for building without cache):
-    #./deploy.dev.sh --rebuild --no-cache
+    # ./deploy.dev.sh --rebuild --no-cache

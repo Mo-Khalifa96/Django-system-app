@@ -43,7 +43,6 @@ echo ""
 echo ""
 
 
-
 #HOW TO USE (examples):
  # Sync changes from last commit only (default)
  # ./sync-files.sh

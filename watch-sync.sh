@@ -21,7 +21,7 @@ do
     fi
     
     echo ""
-    echo "🔔 Change detected: $file"
+    echo "Change detected: $file"
     
     # Copy to containers
     for service in "${SERVICES[@]}"; do

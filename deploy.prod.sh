@@ -21,7 +21,6 @@ trap rollback ERR
 switch_nginx_config() {
     local config_type=$1
     echo "Switching to nginx $config_type configuration..."
-    
     if [ "$config_type" = "http" ]; then
         cp nginx/http.conf nginx/nginx.conf
     elif [ "$config_type" = "https" ]; then
@@ -83,23 +82,24 @@ echo "Testing nginx configuration..."
 docker compose -f docker-compose.prod.yml exec -T nginx nginx -t
 
 
-echo "Creating directory for ACME challenge..."
+echo "Creating ACME challenge directory..."
 docker compose -f docker-compose.prod.yml exec -T nginx sh -c 'mkdir -p /var/www/certbot/.well-known/acme-challenge'
 
-echo "Testing basic HTTP access to your domain..."
+
+echo "Testing basic HTTP access..."
 if ! curl -f --connect-timeout 10 --max-time 30 http://djsys.site/health/; then
     echo "HTTP access test failed! Stopping deployment..."
     exit 1   #exit if HTTP access fails
 fi
 
 
-echo "Creating test file for ACME challenge..."
+echo "Creating ACME test file..."
 docker compose -f docker-compose.prod.yml exec -T nginx sh -c 'echo "test" > /var/www/certbot/.well-known/acme-challenge/test'
 
 echo "Testing ACME challenge path..."
 if ! curl -f --connect-timeout 10 --max-time 30 http://djsys.site/.well-known/acme-challenge/test; then
     echo "ACME challenge path not accessible! Stopping deployment..."
-    exit 1   #exit if ACME challenge path is not accessible 
+    exit 1  #exit if ACME challenge path is not accessible 
 fi
 
 
@@ -131,17 +131,17 @@ if ! docker compose -f docker-compose.prod.yml exec -T nginx ls /etc/letsencrypt
     exit 1
 fi
 
+
 echo "Processing CORS variables in HTTPS config..."
 CORS_ALLOWED_ORIGINS="$CORS_ALLOWED_ORIGINS" envsubst '$CORS_ALLOWED_ORIGINS' < nginx/https.conf > nginx/https.conf.tmp
 mv nginx/https.conf.tmp nginx/https.conf
 
+
 #Switch to https
 switch_nginx_config "https"
 
-
 echo "Testing new HTTPS configuration..."
 docker compose -f docker-compose.prod.yml exec -T nginx nginx -t
-
 
 echo "Reloading nginx with HTTPS configuration..."
 docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload
@@ -151,8 +151,13 @@ sleep 5
 echo "Testing HTTPS access..."
 if ! curl -f --connect-timeout 10 --max-time 30 https://djsys.site/health/; then
     echo "HTTPS access test failed! Check your certificates and nginx config. Stopping deployment..."
-    exit 1 #exit if HTTPS access fails after nginx is loaded
+    exit 1  #exits if HTTPS access fails after nginx is loaded
 fi
+
+
+#Start certbot renewal loop
+echo "Starting certbot renewal container..."
+docker compose -f docker-compose.prod.yml up -d certbot
 
 
 #Clean up backup file on success
@@ -170,4 +175,4 @@ echo "Deployment completed successfully!"
     # ./deploy.prod.sh --rebuild
 
 #or (for building without cache):
-    #./deploy.prod.sh --rebuild --no-cache
+    # ./deploy.prod.sh --rebuild --no-cache
