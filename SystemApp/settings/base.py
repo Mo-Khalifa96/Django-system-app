@@ -221,16 +221,17 @@ LOGGING = {
         'general_file': {
             'class': 'logging.handlers.RotatingFileHandler',  
             'filename': f'{BASE_DIR}/logs/general.log',
+            'filters': ['ignore_requests'],
             'formatter': 'verbose',   
             'level': 'DEBUG',
             'maxBytes': 10 * 1024 * 1024,  #10MB max file size
-            'filters': ['ignore_requests'],
             'backupCount': 5,  
             'encoding': 'utf-8'
         },
         'errors_file': {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': f'{BASE_DIR}/logs/errors.log',
+            'filters': ['ignore_requests'],
             'formatter': 'verbose',
             'level': 'ERROR',   #only ERROR and CRITICAL are logged
             'maxBytes': 10*1024*1024,   #10MB max file size
