@@ -108,7 +108,6 @@ class DjangoQFilter(logging.Filter):
             bytes_value /= 1024
         return f'{bytes_value:.1f} TB'
 
-
     def filter(self, record):
         db_error_patterns = [
             'name or service not known',
@@ -118,49 +117,29 @@ class DjangoQFilter(logging.Filter):
             'reincarnated pusher',
         ]
     
-        if hasattr(record, 'getMessage'):
-            message = record.getMessage().lower()
-            
-            if any(pattern in message for pattern in db_error_patterns):
-                usage, limit = self._check_memory()
-                memory_percentage = self._get_memory_percentage(usage, limit)
+        if not hasattr(record, 'getMessage'):
+            return True
 
-                if memory_percentage and memory_percentage >= self.memory_threshold:
-                    self.logger.critical(
-                        'MEMORY PRESSURE DETECTED: Unable to connect to database for scheduled tasks likely due to OOM conditions.\n'
-                        f'Current memory usage: {memory_percentage:.2f}% ({self._format_bytes(usage)}/{self._format_bytes(limit)})\n'
-                        'Retrying...\n\n'
-                    )
-                else:
-                    self.logger.warning('Unable to connect to database for scheduled tasks due to connection issues. Retrying...\n\n')
-                    self.logger.warning('MESSAGE FOR DEBUGGING:\n', message, '\n-------------\n')
-                
-                return False   
+        try:
+            message = record.getMessage().lower()
+        except Exception:
+            return True
+            
+        if any(pattern in message for pattern in db_error_patterns):
+            usage, limit = self._check_memory()
+            memory_percentage = self._get_memory_percentage(usage, limit)
+
+            #Annotate record with memory info 
+            if memory_percentage and memory_percentage >= self.memory_threshold:
+                record.memory_info = (
+                    f'MEMORY PRESSURE DETECTED: {memory_percentage:.2f}% '
+                    f'({self._format_bytes(usage)}/{self._format_bytes(limit)})'
+                )
+                record.levelno = logging.CRITICAL
+                record.levelname = 'CRITICAL'
+            else:
+                record.memory_info = f'Memory OK: {memory_percentage:.2f}%' if memory_percentage else 'Memory: unknown'
+
+            return True
 
         return True
-
-
-#Simpler Django-Q2 filter (unused)
-class DjangoQFilter_simple(logging.Filter):
-    def __init__(self):
-        super().__init__()
-        #Instantiate django-q logger
-        self.logger = logging.getLogger('django-q')
-
-    def filter(self, record):        
-        db_error_patterns = [
-                'name or service not known',
-                'failed to pull task from broker',
-                'temporary failure in name resolution', 
-                'reincarnated pusher',
-            ]
-        
-        if hasattr(record, 'getMessage'):
-            message = record.getMessage().lower()
-            
-            if any(pattern in message for pattern in db_error_patterns):
-                self.logger.warning('Unable to connect to database for scheduled tasks due to connection issues. Retrying...')
-                return False   
-                                            
-        return True
-
